@@ -7,6 +7,7 @@ import AuthPage from "@/hoc/AuthPage";
 import { Decoded } from "@/interface/response/Api";
 import { Product } from "@/interface/response/Product";
 import {
+  deletePicturesProduct,
   deleteProductBySlug,
   editProductBySlug,
   getProductBySlug,
@@ -40,6 +41,7 @@ import {
 import { createTransactions } from "@/services/transactions";
 import { FileUpload } from "@/components/ui/file-upload";
 import ImageOverlay from "@/components/ImageOverlay";
+import LoadingScreen from "@/components/LoadingScreen";
 
 const DetailProductPage = () => {
   const router = useRouter();
@@ -65,9 +67,11 @@ const DetailProductPage = () => {
   const [imagePickeds, setImagePickeds] = useState<File[]>([]);
   const [isEditImage, setIsEditImage] = useState<boolean>(false);
 
-  const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [img, setImg] = useState<string>();
+
+  const [pictureModal, setPictureModal] = useState<boolean>(false);
 
   const onChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -198,11 +202,26 @@ const DetailProductPage = () => {
   const onToggleEditImage = () => {
     setIsEditImage(!isEditImage);
     setImagePickeds([]);
+    setSelectedIds([]);
   };
 
   const handleFileUpload = (files: File[]) => {
     setImagePickeds(files);
   };
+
+  const afterPictureDeleted = () => {
+    setSelectedIds([]);
+    if (data) {
+      setData({
+        ...data,
+        pictures: data.pictures.filter(
+          (item) => !selectedIds.includes(item.id)
+        ),
+      });
+    }
+  };
+
+  if (!data) return <LoadingScreen />;
 
   return (
     <SidebarApp>
@@ -235,16 +254,12 @@ const DetailProductPage = () => {
                         className="min-h-20 min-w-20 h-20 w-20 rounded-md overflow-hidden relative cursor-pointer"
                         onClick={() => {
                           if (isEditImage) {
-                            if (
-                              selectedUrls.some((url) => pic.url.includes(url))
-                            ) {
-                              setSelectedUrls(
-                                selectedUrls.filter(
-                                  (url) => !pic.url.includes(url)
-                                )
+                            if (selectedIds.some((id) => pic.id.includes(id))) {
+                              setSelectedIds(
+                                selectedIds.filter((id) => !pic.id.includes(id))
                               );
                             } else {
-                              setSelectedUrls([...selectedUrls, pic.url]);
+                              setSelectedIds([...selectedIds, pic.id]);
                             }
                           } else {
                             setSelectedImage(pic.url);
@@ -253,9 +268,7 @@ const DetailProductPage = () => {
                       >
                         {isEditImage && (
                           <div>
-                            {selectedUrls.some((url) =>
-                              pic.url.includes(url)
-                            ) ? (
+                            {selectedIds.some((id) => pic.id.includes(id)) ? (
                               <div className="w-full h-full bg-red-500 absolute bg-opacity-75 text-white font-bold flex items-center justify-center">
                                 Hapus
                               </div>
@@ -286,20 +299,10 @@ const DetailProductPage = () => {
                   >
                     {isEditImage ? "Batal" : "Edit Gambar"}
                   </Button>
-                  {selectedUrls.length > 0 && (
+                  {selectedIds.length > 0 && (
                     <Button
                       status="danger"
-                      onClick={() => {
-                        postPicturesProduct(
-                          slug as string,
-                          imagePickeds,
-                          loading,
-                          setLoading,
-                          fetchData
-                        );
-                        setImagePickeds([]);
-                        setIsEditImage(false);
-                      }}
+                      onClick={() => setPictureModal(true)}
                     >
                       Hapus
                     </Button>
@@ -490,6 +493,25 @@ const DetailProductPage = () => {
         onClose={() => setDeleteModal(false)}
         onConfirm={handleDelete}
       />
+      <ModalConfirmation
+        isOpen={pictureModal}
+        onClose={() => setPictureModal(false)}
+        onConfirm={() => {
+          deletePicturesProduct(
+            { ids: selectedIds },
+            loading,
+            setLoading,
+            fetchData
+          );
+          afterPictureDeleted();
+          setImagePickeds([]);
+          setIsEditImage(false);
+          setPictureModal(false);
+          if (data?.pictures.length === selectedIds.length) {
+            setSelectedImage(DEFAULT_IMAGE);
+          }
+        }}
+      />
       <ModalAction
         isOpen={editModal}
         onClose={() => {
@@ -624,7 +646,7 @@ const DetailProductPage = () => {
           </div>
         </LabelInputContainer>
         <LabelInputContainer className="mb-4">
-          <Label>Jumlah</Label>
+          <Label>Kuantitas</Label>
           <Input
             placeholder="Jumlah"
             value={formTrans.amount}
@@ -633,6 +655,22 @@ const DetailProductPage = () => {
             type="number"
             inputMode="numeric"
           />
+        </LabelInputContainer>
+        <LabelInputContainer className="mb-4">
+          <Label>Jumlah</Label>
+          <div
+            className={`${
+              formTrans.type === "IN" ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {data &&
+              formatRupiah(
+                formTrans.amount *
+                  (formTrans.type === "IN"
+                    ? data?.sellingPrice
+                    : data?.buyingPrice)
+              )}
+          </div>
         </LabelInputContainer>
       </ModalAction>
       <ImageOverlay src={img} setSrc={setImg} />

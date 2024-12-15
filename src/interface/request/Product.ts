@@ -25,3 +25,7 @@ export const initProductEditProductForm: EditProductForm = {
 export interface CreateProductForm extends EditProductForm {
   initialStock: number;
 }
+
+export interface DeletePicturesForm {
+  ids: string[];
+}

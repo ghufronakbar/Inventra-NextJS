@@ -5,7 +5,11 @@ import { Product } from "@/interface/response/Product";
 import { ProductParams } from "@/interface/request/Params";
 import toast from "@/helper/toast";
 import { NextRouter } from "next/router";
-import { EditProductForm, ErrorProductForm } from "@/interface/request/Product";
+import {
+  DeletePicturesForm,
+  EditProductForm,
+  ErrorProductForm,
+} from "@/interface/request/Product";
 
 export const getAllProducts = async (params?: ProductParams) => {
   try {
@@ -88,6 +92,32 @@ export const deleteProductBySlug = async (slug: string) => {
     const err = error as ResBad;
     toast.error(err?.response?.data?.message);
     print.error(error);
+  }
+};
+
+export const deletePicturesProduct = async (
+  form: DeletePicturesForm,
+  loading: boolean,
+  setLoading: (loading: boolean) => void,
+  afterSuccess?: () => void
+) => {
+  try {
+    if (loading) return;
+    setLoading(true);
+    const { data } = await axiosInstance.delete<ResOk<Product>>(
+      `/products/pictures`,
+      {
+        data: form,
+      }
+    );
+    toast.success(data?.message || "Foto produk berhasil dihapus!");
+    afterSuccess?.();
+  } catch (error) {
+    const err = error as ResBad;
+    toast.error(err?.response?.data?.message);
+    print.error(error);
+  } finally {
+    setLoading(false);
   }
 };
 
