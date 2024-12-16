@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Cookie from "js-cookie";
+import Cookies from "js-cookie";
 import { useRouter } from "next/router";
 import { ACCESS_TOKEN } from "@/constants/key";
 import { Toaster } from "@/components/ui/toaster";
@@ -22,7 +22,7 @@ const AuthPage = (
       if (router.isReady) {
         const fetchData = async () => {
           const path = router.asPath;
-          const accessToken = Cookie.get(ACCESS_TOKEN);
+          const accessToken = Cookies.get(ACCESS_TOKEN);
           if (!accessToken) {
             router.push(`/login?redirect=${path}`);
             toast.error("Login terlebih dahulu!");

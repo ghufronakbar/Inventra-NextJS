@@ -1,5 +1,5 @@
 import axiosInstance from "@/config/axiosInstance";
-import { ResBad, ResOk } from "@/interface/response/Api";
+import { Pagination, ResBad, ResOk } from "@/interface/response/Api";
 import { print } from "@/utils/helper";
 import toast from "@/helper/toast";
 import {
@@ -7,6 +7,21 @@ import {
   ErrorTransactionForm,
 } from "@/interface/request/Transaction";
 import { Transaction } from "@/interface/response/Transaction";
+import { TransactionParams } from "@/interface/request/Params";
+
+export const getAllTransasctions = async (params?: TransactionParams) => {
+  try {
+    const { data } = await axiosInstance.get<ResOk<Transaction[], Pagination>>(
+      "/transactions",
+      {
+        params,
+      }
+    );
+    return data;
+  } catch (error) {
+    print.error(error);
+  }
+};
 
 export const createTransactions = async (
   form: CreateTransactionForm,

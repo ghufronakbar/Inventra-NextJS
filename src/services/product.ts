@@ -6,10 +6,15 @@ import { ProductParams } from "@/interface/request/Params";
 import toast from "@/helper/toast";
 import { NextRouter } from "next/router";
 import {
+  CreateProductForm,
   DeletePicturesForm,
   EditProductForm,
-  ErrorProductForm,
+  ErrorCreateProductForm,
+  ErrorEditProductForm,
+  initCreateProductForm,
 } from "@/interface/request/Product";
+import { CACHE_KEY } from "@/constants/cache";
+import Cookies from "js-cookie";
 
 export const getAllProducts = async (params?: ProductParams) => {
   try {
@@ -37,16 +42,70 @@ export const getProductBySlug = async (slug: string, router: NextRouter) => {
   }
 };
 
+export const createProduct = async (
+  form: CreateProductForm,
+  loading: boolean,
+  setLoading: (loading: boolean) => void,
+  setErrorForm: (errorForm?: ErrorCreateProductForm) => void,
+  setModal: (isOpen: boolean) => void,
+  setForm: (form: CreateProductForm) => void,
+  afterSuccess?: () => void
+) => {
+  if (loading) return;
+  const errorForm: ErrorCreateProductForm = {} as ErrorCreateProductForm;
+
+  if (!form.name) {
+    errorForm.name = "Nama wajib diisi";
+  }
+  if (isNaN(Number(form.buyingPrice)) || Number(form.buyingPrice) <= 0) {
+    errorForm.buyingPrice = "Harga beli harus diisi bilangan positif";
+  }
+
+  if (isNaN(Number(form.sellingPrice)) || Number(form.sellingPrice) <= 0) {
+    errorForm.sellingPrice = "Harga jual harus diisi bilangan positif";
+  }
+
+  if (isNaN(Number(form.initialStock)) || Number(form.initialStock) <= 0) {
+    errorForm.initialStock = "Stok awal harus diisi bilangan positif";
+  }
+
+  if (Object.keys(errorForm).length > 0) {
+    setErrorForm(errorForm);
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setModal(false);
+    setForm(initCreateProductForm);
+    const { data } = await axiosInstance.post<ResOk<Product>>(`/products`, {
+      ...form,
+      buyingPrice: Number(form.buyingPrice),
+      sellingPrice: Number(form.sellingPrice),
+      initialStock: Number(form.initialStock),
+    });
+    toast.success(data?.message || "Berhasil membuat produk!");
+    Cookies.remove(CACHE_KEY.CATEGORIES);
+    afterSuccess?.();
+  } catch (error) {
+    const err = error as ResBad;
+    toast.error(err?.response?.data?.message);
+    print.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 export const editProductBySlug = async (
   slug: string,
   form: EditProductForm,
   loading: boolean,
   setLoading: (loading: boolean) => void,
-  setErrorForm: (errorForm?: ErrorProductForm) => void,
+  setErrorForm: (errorForm?: ErrorEditProductForm) => void,
   afterSuccess?: () => void
 ) => {
   if (loading) return;
-  const errorForm: ErrorProductForm = {} as ErrorProductForm;
+  const errorForm: ErrorEditProductForm = {} as ErrorEditProductForm;
 
   if (!form.name) {
     errorForm.name = "Nama wajib diisi";
@@ -72,6 +131,7 @@ export const editProductBySlug = async (
       form
     );
     toast.success(data?.message || "Produk berhasil diubah!");
+    Cookies.remove(CACHE_KEY.CATEGORIES);
     afterSuccess?.();
   } catch (error) {
     const err = error as ResBad;

@@ -6,7 +6,7 @@ export interface EditProductForm {
   sellingPrice: number;
 }
 
-export interface ErrorProductForm {
+export interface ErrorEditProductForm {
   name: string;
   desc: string;
   category: string;
@@ -24,6 +24,15 @@ export const initProductEditProductForm: EditProductForm = {
 
 export interface CreateProductForm extends EditProductForm {
   initialStock: number;
+}
+
+export const initCreateProductForm: CreateProductForm = {
+  ...initProductEditProductForm,
+  initialStock: 0,
+};
+
+export interface ErrorCreateProductForm extends ErrorEditProductForm {
+  initialStock: string;
 }
 
 export interface DeletePicturesForm {

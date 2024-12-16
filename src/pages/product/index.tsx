@@ -10,7 +10,11 @@ import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import AuthPage from "@/hoc/AuthPage";
-import { deleteProductBySlug, getAllProducts } from "@/services/product";
+import {
+  createProduct,
+  deleteProductBySlug,
+  getAllProducts,
+} from "@/services/product";
 import { Product } from "@/interface/response/Product";
 import { getAllCategories } from "@/services/category";
 import { ProductParams } from "@/interface/request/Params";
@@ -19,6 +23,14 @@ import ModalConfirmation from "@/components/ModalConfirmation";
 import Image from "next/image";
 import { DEFAULT_IMAGE } from "@/constants/image";
 import { Toaster } from "@/components/ui/toaster";
+import ModalAction from "@/components/ModalAction";
+import { Input, LabelInputContainer, TextArea } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  CreateProductForm,
+  ErrorCreateProductForm,
+  initCreateProductForm,
+} from "@/interface/request/Product";
 
 const ProductPage = () => {
   const router = useRouter();
@@ -50,6 +62,18 @@ const ProductPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const [form, setForm] = useState<CreateProductForm>(initCreateProductForm);
+  const [errorForm, setErrorForm] = useState<ErrorCreateProductForm>();
+  const [addModal, setAddModal] = useState<boolean>(false);
+
+  const onChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    type: keyof CreateProductForm
+  ) => {
+    setForm({ ...form, [type]: e.target.value });
+    setErrorForm(undefined);
   };
 
   const fetchCategories = async () => {
@@ -99,9 +123,20 @@ const ProductPage = () => {
     setSelectedSlug(slug);
   };
 
+  const filteredCategories = options.filter((option) =>
+    option.label.toLowerCase().includes(form.category.toLowerCase())
+  );
+
   return (
     <SidebarApp>
-      <LayoutDashboard title="Produk">
+      <LayoutDashboard
+        title="Produk"
+        childrenHeader={
+          decoded?.role !== "ADMIN" && (
+            <Button onClick={() => setAddModal(true)}>Tambah Produk</Button>
+          )
+        }
+      >
         <FilterData options={options} />
         <div className="relative overflow-x-auto hide-scroll rounded-lg">
           <table className="w-full text-sm text-left rtl:text-right text-gray-500 ">
@@ -156,7 +191,7 @@ const ProductPage = () => {
                       alt=""
                       width={200}
                       height={200}
-                      className="min-w-12 min-h-12 w-12 h-12 rounded-lg"
+                      className="min-w-12 min-h-12 w-12 h-12 rounded-lg object-cover"
                     />
                   </td>
                   <td className="px-6 py-4">
@@ -207,6 +242,102 @@ const ProductPage = () => {
           onConfirm={handleDelete}
         />
       </LayoutDashboard>
+      <ModalAction
+        isOpen={addModal}
+        onClose={() => {
+          setErrorForm(undefined);
+          setAddModal(false);
+        }}
+        title="Tambah Produk"
+        confirmText="Simpan"
+        onConfirm={() => {
+          createProduct(
+            form,
+            loading,
+            setLoading,
+            setErrorForm,
+            setAddModal,
+            setForm,
+            () => {
+              fetchData();
+              fetchCategories();
+            }
+          );
+        }}
+      >
+        <LabelInputContainer className="mb-4">
+          <Label>Nama</Label>
+          <Input
+            placeholder="Nama Produk"
+            value={form.name}
+            onChange={(e) => onChange(e, "name")}
+            errorMessage={errorForm?.name}
+          />
+        </LabelInputContainer>
+        <LabelInputContainer className="mb-4">
+          <Label>Kategori</Label>
+          <Input
+            placeholder="Kategori Produk"
+            value={form.category}
+            onChange={(e) => onChange(e, "category")}
+            errorMessage={errorForm?.category}
+          />
+        </LabelInputContainer>
+        <div className="flex flex-row w-full overflow-x-auto gap-2 mb-2 h-auto">
+          {filteredCategories.map((item, index) => (
+            <div
+              key={index}
+              className="relative group/btn flex space-x-2 items-center text-black rounded-md h-6 font-medium shadow-input bg-gray-50 justify-center text-xs px-2 py-1 w-fit mb-2 cursor-pointer hover:bg-gray-100"
+              onClick={() => setForm({ ...form, category: item.label })}
+            >
+              {item.label}
+            </div>
+          ))}
+        </div>
+        <LabelInputContainer className="mb-4">
+          <Label>Deskripsi</Label>
+          <TextArea
+            placeholder="Deskripsi Produk"
+            value={form.desc || ""}
+            errorMessage={errorForm?.desc}
+            onChange={(e) => onChange(e, "desc")}
+            rows={4}
+          />
+        </LabelInputContainer>
+        <LabelInputContainer className="mb-4">
+          <Label>Stok Awal</Label>
+          <Input
+            placeholder="Stok Awal"
+            value={form.initialStock}
+            onChange={(e) => onChange(e, "initialStock")}
+            errorMessage={errorForm?.initialStock}
+            type="number"
+            inputMode="numeric"
+          />
+        </LabelInputContainer>
+        <LabelInputContainer className="mb-4">
+          <Label>Harga Beli</Label>
+          <Input
+            placeholder="Harga Beli (RP)"
+            value={form.buyingPrice}
+            onChange={(e) => onChange(e, "buyingPrice")}
+            errorMessage={errorForm?.buyingPrice}
+            type="number"
+            inputMode="numeric"
+          />
+        </LabelInputContainer>
+        <LabelInputContainer className="mb-4">
+          <Label>Harga Jual</Label>
+          <Input
+            placeholder="Harga Jual (RP)"
+            value={form.sellingPrice}
+            onChange={(e) => onChange(e, "sellingPrice")}
+            errorMessage={errorForm?.sellingPrice}
+            type="number"
+            inputMode="numeric"
+          />
+        </LabelInputContainer>
+      </ModalAction>
       <Toaster />
     </SidebarApp>
   );

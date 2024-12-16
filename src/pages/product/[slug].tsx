@@ -30,7 +30,7 @@ import { Label } from "@/components/ui/label";
 import {
   EditProductForm,
   initProductEditProductForm,
-  ErrorProductForm,
+  ErrorEditProductForm,
 } from "@/interface/request/Product";
 import { getAllCategories } from "@/services/category";
 import {
@@ -57,7 +57,7 @@ const DetailProductPage = () => {
   const [formTrans, setFormTrans] = useState<CreateTransactionForm>(
     initCreateTransactionForm
   );
-  const [errorForm, setErrorForm] = useState<ErrorProductForm>();
+  const [errorForm, setErrorForm] = useState<ErrorEditProductForm>();
   const [errorTrans, setErrorTrans] = useState<ErrorTransactionForm>();
   const [categories, setCategories] = useState<string[]>([]);
   const filteredCategories = categories.filter((item) =>

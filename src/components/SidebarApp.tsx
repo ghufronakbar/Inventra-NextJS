@@ -1,73 +1,78 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
-import { IconArrowLeft, IconBrandTabler } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconBrandTabler,
+  IconTransactionBitcoin,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { BsPeople } from "react-icons/bs";
-
-import {
-  RiAccountPinBoxLine,  
-  RiFileHistoryLine,
-} from "react-icons/ri";
-
-import { PiBird } from "react-icons/pi";
-import { VscRequestChanges } from "react-icons/vsc";
-import { AiOutlineQuestionCircle } from "react-icons/ai";
-
-
-// import { DEFAULT_PROFILE, LOGO } from "@/constants/image";
-import { BiAward, BiCommentError } from "react-icons/bi";
-
+import { PiRecord } from "react-icons/pi";
+import { AiOutlineProduct } from "react-icons/ai";
+import { DEFAULT_PROFILE, LOGO } from "@/constants/image";
+import { Decoded, ResOk } from "@/interface/response/Api";
+import axios from "axios";
+import Cookies from "js-cookie";
+import { REFRESH_TOKEN } from "@/constants/key";
+import { print } from "@/utils/helper";
 const iconClassName = "text-neutral-700  h-5 w-5 flex-shrink-0";
 
-const links: LinksProps[] = [
+const adminLinks: LinksProps[] = [
   {
     label: "Dashboard",
-    href: "/admin/dashboard",
+    href: "/dashboard",
     icon: <IconBrandTabler className={iconClassName} />,
   },
   {
-    label: "Satwa",
-    href: "/admin/animal",
-    icon: <PiBird className={iconClassName} />,
+    label: "Produk",
+    href: "/product",
+    icon: <AiOutlineProduct className={iconClassName} />,
   },
+  {
+    label: "Transaksi",
+    href: "/transaction",
+    icon: <IconTransactionBitcoin className={iconClassName} />,
+  },
+  {
+    label: "Riwayat Perubahan",
+    href: "/record",
+    icon: <PiRecord className={iconClassName} />,
+  },
+  {
+    label: "Logout",
+    href: "/",
+    icon: <IconArrowLeft className={iconClassName} />,
+  },
+];
 
+const superAdminLinks: LinksProps[] = [
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: <IconBrandTabler className={iconClassName} />,
+  },
+  {
+    label: "Produk",
+    href: "/product",
+    icon: <AiOutlineProduct className={iconClassName} />,
+  },
   {
     label: "Pengguna",
-    href: "/admin/user",
+    href: "/user",
     icon: <BsPeople className={iconClassName} />,
   },
   {
-    label: "Top Kontributor",
-    href: "/admin/top-contributor",
-    icon: <BiAward className={iconClassName} />,
+    label: "Transaksi",
+    href: "/transaction",
+    icon: <IconTransactionBitcoin className={iconClassName} />,
   },
   {
-    label: "Permintaan Data Satwa",
-    href: "/admin/request-data",
-    icon: <VscRequestChanges className={iconClassName} />,
-  },
-  {
-    label: "Permintaan Pembuatan Akun",
-    href: "/admin/request-account",
-    icon: <RiAccountPinBoxLine className={iconClassName} />,
-  },
-  {
-    label: "Riwayat Kirim Data",
-    href: "/admin/history",
-    icon: <RiFileHistoryLine className={iconClassName} />,
-  },
-  {
-    label: "Data Saran Input",
-    href: "/admin/suggestion",
-    icon: <AiOutlineQuestionCircle className={iconClassName} />,
-  },
-  {
-    label: "Laporan Pengguna",
-    href: "/admin/report",
-    icon: <BiCommentError className={iconClassName} />,
+    label: "Riwayat Perubahan",
+    href: "/record",
+    icon: <PiRecord className={iconClassName} />,
   },
   {
     label: "Logout",
@@ -81,15 +86,24 @@ export default function SidebarApp({
 }: {
   children: React.ReactNode;
 }) {
-  
   const [open, setOpen] = useState<boolean>(false);
-  
+  const [linkItems, setLinkItems] = useState<LinksProps[]>(adminLinks);
+  const [email, setEmail] = useState<string>("");
 
   const fetchPayload = async () => {
     try {
-  
+      const accessToken = Cookies.get(REFRESH_TOKEN);
+      const { data } = await axios.get<ResOk<Decoded>>("/api/check-auth", {
+        params: {
+          auth: accessToken,
+        },
+      });
+      setEmail(data.data.email);
+      if (data && data.data.role === "SUPER_ADMIN") {
+        setLinkItems(superAdminLinks);
+      }
     } catch (err) {
-      console.log(err);
+      print.error(err);
     }
   };
 
@@ -98,13 +112,14 @@ export default function SidebarApp({
   }, []);
 
   useEffect(() => {
-    const isLinkAdminExist = links.find((link) => link.label === "Data Admin");
+    const isLinkAdminExist = adminLinks.find(
+      (link) => link.label === "Data Admin"
+    );
     console.log(isLinkAdminExist);
   }, []);
 
   const handleLogout = () => {
     console.log("Logout");
-    
   };
 
   return (
@@ -114,7 +129,7 @@ export default function SidebarApp({
           <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
             {open ? <Logo /> : <LogoIcon />}
             <div className="mt-8 flex flex-col gap-2">
-              {links.map((link, idx) => (
+              {linkItems.map((link, idx) => (
                 <SidebarLink
                   key={idx}
                   link={link}
@@ -128,11 +143,11 @@ export default function SidebarApp({
           <div>
             <SidebarLink
               link={{
-                label: "Email",
-                href: "/admin/profile",
+                label: email,
+                href: "/profile",
                 icon: (
                   <Image
-                    src={"/profile.png"}
+                    src={DEFAULT_PROFILE}
                     className="h-7 w-7 flex-shrink-0 rounded-full"
                     width={50}
                     height={50}
@@ -151,11 +166,11 @@ export default function SidebarApp({
 export const Logo = () => {
   return (
     <Link
-      href="/admin/dashboard"
+      href="/dashboard"
       className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
     >
       <Image
-        src={"/logo.png"}
+        src={LOGO}
         width={50}
         height={50}
         alt="Avatar"
@@ -164,9 +179,9 @@ export const Logo = () => {
       <motion.span
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="font-medium text-black  whitespace-pre"
+        className="font-semibold text-black  whitespace-pre"
       >
-        Lestari
+        Inventra
       </motion.span>
     </Link>
   );
@@ -174,11 +189,11 @@ export const Logo = () => {
 export const LogoIcon = () => {
   return (
     <Link
-      href="/admin/dashboard"
+      href="/dashboard"
       className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
     >
       <Image
-        src={"/logo.png"}
+        src={LOGO}
         width={50}
         height={50}
         alt="Avatar"
