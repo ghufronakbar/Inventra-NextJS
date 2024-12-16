@@ -21,6 +21,11 @@ import {
   getAllUsers,
   setActiveStatusUser as setActiveStatusUser,
 } from "@/services/user";
+import ModalAction from "@/components/ModalAction";
+import { initRegisterForm, RegisterForm } from "@/interface/request/Auth";
+import { Input, LabelInputContainer } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { createNewUser } from "@/services/auth";
 
 const UserPage = () => {
   const router = useRouter();
@@ -99,9 +104,26 @@ const UserPage = () => {
     setSelected(user);
   };
 
+  const [isUserOpen, setIsUserOpen] = useState(false);
+  const [form, setForm] = useState<RegisterForm>(initRegisterForm);
+  const [errorForm, setErrorForm] = useState<RegisterForm>();
+
+  const onChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: keyof RegisterForm
+  ) => {
+    setForm({ ...form, [type]: e.target.value });
+    setErrorForm(undefined);
+  };
+
   return (
     <SidebarApp>
-      <LayoutDashboard title="Pengguna">
+      <LayoutDashboard
+        title="Pengguna"
+        childrenHeader={
+          <Button onClick={() => setIsUserOpen(true)}>Tambah</Button>
+        }
+      >
         <FilterData options={options} />
         <div className="relative overflow-x-auto hide-scroll rounded-lg">
           <table className="w-full text-sm text-left rtl:text-right text-gray-500 ">
@@ -161,20 +183,22 @@ const UserPage = () => {
                   </td>
                   <td className="px-6 py-4">{item?.role}</td>
                   <td className="px-6 py-4">
-                    <div
-                      className={`${
-                        !item.isConfirmed
-                          ? "bg-gray-500"
+                    <div className="flex flex-row justify-center items-center">
+                      <div
+                        className={`${
+                          !item.isConfirmed
+                            ? "bg-gray-500"
+                            : item.isActived
+                            ? "bg-green-500"
+                            : "bg-red-500"
+                        } px-2 py-1 text-white w-fit rounded-lg text-sm font-semibold`}
+                      >
+                        {!item.isConfirmed
+                          ? "Menunggu Konfirmasi"
                           : item.isActived
-                          ? "bg-green-500"
-                          : "bg-red-500"
-                      } px-2 py-1 text-white w-fit rounded-lg text-sm font-semibold`}
-                    >
-                      {!item.isConfirmed
-                        ? "Menunggu Konfirmasi"
-                        : item.isActived
-                        ? "Aktif"
-                        : "Tidak Aktif"}
+                          ? "Aktif"
+                          : "Tidak Aktif"}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">{formatDate(item.updatedAt)}</td>
@@ -211,6 +235,47 @@ const UserPage = () => {
           confirmText="Ya"
         />
       </LayoutDashboard>
+      <ModalAction
+        isOpen={isUserOpen}
+        onClose={() => {
+          setErrorForm(undefined);
+          setIsUserOpen(false);
+        }}
+        title="Daftarkan Pengguna"
+        confirmText="Simpan"
+        onConfirm={() => {
+          createNewUser(
+            form,
+            loading,
+            setLoading,
+            setErrorForm,
+            setIsUserOpen,
+            setForm,
+            () => {
+              fetchData();
+            }
+          );
+        }}
+      >
+        <LabelInputContainer className="mb-4">
+          <Label>Nama</Label>
+          <Input
+            placeholder="Nama"
+            value={form.name}
+            onChange={(e) => onChange(e, "name")}
+            errorMessage={errorForm?.name}
+          />
+        </LabelInputContainer>
+        <LabelInputContainer className="mb-4">
+          <Label>Email</Label>
+          <Input
+            placeholder="Email"
+            value={form.email}
+            onChange={(e) => onChange(e, "email")}
+            errorMessage={errorForm?.email}
+          />
+        </LabelInputContainer>
+      </ModalAction>
       <Toaster />
     </SidebarApp>
   );
