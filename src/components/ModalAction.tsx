@@ -14,7 +14,7 @@ const ModalAction = ({
   onClose,
   onConfirm,
   title,
-  confirmText = "Hapus",
+  confirmText = "Ya",
   children,
 }: ModalConfirmationProps) => {
   return (

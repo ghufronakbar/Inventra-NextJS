@@ -42,6 +42,7 @@ import { createTransactions } from "@/services/transactions";
 import { FileUpload } from "@/components/ui/file-upload";
 import ImageOverlay from "@/components/ImageOverlay";
 import LoadingScreen from "@/components/LoadingScreen";
+import { NEXT_PUBLIC_API } from "@/constants";
 
 const DetailProductPage = () => {
   const router = useRouter();
@@ -72,6 +73,10 @@ const DetailProductPage = () => {
   const [img, setImg] = useState<string>();
 
   const [pictureModal, setPictureModal] = useState<boolean>(false);
+
+  const [downloadModal, setDownloadModal] = useState<boolean>(false);
+  const [dateStart, setDateStart] = useState<string>("");
+  const [dateEnd, setDateEnd] = useState<string>("");
 
   const onChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -152,7 +157,7 @@ const DetailProductPage = () => {
         <Button
           status="gray"
           onClick={() => {
-            setDeleteModal(true);
+            setDownloadModal(true);
           }}
         >
           Unduh Laporan
@@ -219,6 +224,15 @@ const DetailProductPage = () => {
         ),
       });
     }
+  };
+
+  const downloadReport = () => {
+    setDownloadModal(false);
+    router.push(
+      `${NEXT_PUBLIC_API!}/api/report/product/${
+        data?.id
+      }?start=${dateStart}&end=${dateEnd}`
+    );
   };
 
   if (!data) return <LoadingScreen />;
@@ -333,7 +347,12 @@ const DetailProductPage = () => {
                 <p className="text-lg font-semibold text-gray-800">
                   {data?.category?.name}
                 </p>
-                <p className="text-sm">{data?.desc}</p>
+                <p
+                  className="text-sm whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{
+                    __html: data?.desc ? data.desc.replace(/\n/g, "<br>") : "",
+                  }}
+                />
               </div>
             </div>
             <div className="relative overflow-x-auto hide-scroll rounded-lg">
@@ -603,7 +622,6 @@ const DetailProductPage = () => {
         title="Buat Transaksi Baru"
         confirmText="Simpan"
         onConfirm={() => {
-          setTransModal(false);
           if (data) {
             createTransactions(
               { ...formTrans, productId: data?.id },
@@ -611,7 +629,10 @@ const DetailProductPage = () => {
               setLoading,
               setErrorTrans,
               data.currentStock,
-              fetchData
+              () => {
+                fetchData();
+                setTransModal(false);
+              }
             );
           }
         }}
@@ -648,7 +669,7 @@ const DetailProductPage = () => {
         <LabelInputContainer className="mb-4">
           <Label>Kuantitas</Label>
           <Input
-            placeholder="Jumlah"
+            placeholder="Kuantitas"
             value={formTrans.amount}
             onChange={(e) => onChangeTrans(e, "amount")}
             errorMessage={errorTrans?.amount}
@@ -671,6 +692,32 @@ const DetailProductPage = () => {
                     : data?.buyingPrice)
               )}
           </div>
+        </LabelInputContainer>
+      </ModalAction>
+      <ModalAction
+        isOpen={downloadModal}
+        onClose={() => setDownloadModal(false)}
+        title="Unduh Laporan"
+        confirmText="Unduh"
+        onConfirm={downloadReport}
+      >
+        <LabelInputContainer className="mb-4">
+          <Label>Tanggal Awal</Label>
+          <Input
+            placeholder="Tanggal Awal"
+            value={dateStart}
+            onChange={(e) => setDateStart(e.target.value)}
+            type="date"
+          />
+        </LabelInputContainer>
+        <LabelInputContainer className="mb-4">
+          <Label>Tanggal Akhir</Label>
+          <Input
+            placeholder="Tanggal Akhir"
+            value={dateEnd}
+            onChange={(e) => setDateEnd(e.target.value)}
+            type="date"
+          />
         </LabelInputContainer>
       </ModalAction>
       <ImageOverlay src={img} setSrc={setImg} />

@@ -37,6 +37,8 @@ import {
   LineElement,
 } from "chart.js";
 import LoadingCorner from "@/components/LoadingCorner";
+import Link from "next/link";
+import { NEXT_PUBLIC_API } from "@/constants";
 
 ChartJS.register(
   CategoryScale,
@@ -189,9 +191,14 @@ const DashboardPage = () => {
                 <p className="text-red-600">
                   - {formatRupiah(annuallyInOut.outcome)}
                 </p>
-                <button className="bg-gradient-to-br relative group/btn from-black to-neutral-600 w-full text-white rounded-md h-10 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] text-center flex items-center justify-center mt-4">
-                  Unduh Laporan
-                </button>
+                <Link
+                  href={NEXT_PUBLIC_API! + "/api/report/annual"}
+                  target="_blank"
+                >
+                  <button className="bg-gradient-to-br relative group/btn from-black to-neutral-600 w-full text-white rounded-md h-10 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] text-center flex items-center justify-center mt-4">
+                    Unduh Laporan
+                  </button>
+                </Link>
               </div>
             }
             icon={<MdInsertChartOutlined />}
@@ -211,9 +218,14 @@ const DashboardPage = () => {
                 <p className="text-red-600">
                   - {formatRupiah(monthlyInOut.outcome)}
                 </p>
-                <button className="bg-gradient-to-br relative group/btn from-black to-neutral-600 w-full text-white rounded-md h-10 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] text-center flex items-center justify-center mt-4">
-                  Unduh Laporan
-                </button>
+                <Link
+                  href={NEXT_PUBLIC_API! + "/api/report/this-month"}
+                  target="_blank"
+                >
+                  <button className="bg-gradient-to-br relative group/btn from-black to-neutral-600 w-full text-white rounded-md h-10 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] text-center flex items-center justify-center mt-4">
+                    Unduh Laporan
+                  </button>
+                </Link>
               </div>
             }
             icon={<MdInsertChartOutlined />}
